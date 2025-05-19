@@ -11,7 +11,7 @@ export default function OfferPopup() {
   useEffect(() => {
     if (
       window.location.hostname === "localhost" ||
-      window.location.hostname === "aqua1.netlify.app" ||
+      window.location.hostname === "aquanotch.netlify.app" ||
       window.location.hostname === "aquanotch.com"
     ) {
       const hasSeenPopup = localStorage.getItem("hasSeenOfferPopup");
