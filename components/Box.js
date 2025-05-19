@@ -11,8 +11,8 @@ export default function OfferPopup() {
   useEffect(() => {
     if (
       window.location.hostname === "localhost" ||
-      window.location.hostname === "AquaNotch1.netlify.app" ||
-      window.location.hostname === "AquaNotchbynature.com"
+      window.location.hostname === "aqua1.netlify.app" ||
+      window.location.hostname === "aquanotch.com"
     ) {
       const hasSeenPopup = localStorage.getItem("hasSeenOfferPopup");
       if (!hasSeenPopup) {
@@ -55,7 +55,7 @@ export default function OfferPopup() {
         left: 0,
         width: "100%",
         height: "100%",
-        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        backgroundColor: "rgba(255, 255, 255, 0.5)",
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
@@ -64,8 +64,8 @@ export default function OfferPopup() {
     >
       <div
         style={{
-          backgroundColor: "rgba(13, 13, 13, 0.9)",
-          color: "white",
+          backgroundColor: "rgb(255, 255, 255)",
+          color: "#222",
           padding: "50px",
           borderRadius: "12px",
           width: "600px",
@@ -95,13 +95,13 @@ export default function OfferPopup() {
             <rect width={44} height={44} />
             <path
               d="M7 17L16.8995 7.10051"
-              stroke="#fff"
+              stroke="#222"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
             <path
               d="M7 7.00001L16.8995 16.8995"
-              stroke="#fff"
+              stroke="#222"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
@@ -109,11 +109,11 @@ export default function OfferPopup() {
         </button>
 
         {/* Header */}
-        <h2>GET 10% OFF YOUR FIRST ORDER NOW!</h2>
+        <h2 className="myGray">GET 10% OFF YOUR FIRST ORDER NOW!</h2>
 
         {!isSubmitted ? (
           <>
-            <h6 className="mt-10">Tell us where to send your exclusive code.</h6>
+            <h6 className="mt-10 myGray">Tell us where to send your exclusive code.</h6>
             <form onSubmit={handleSubmit}>
               <input
                 type="email"
@@ -125,9 +125,8 @@ export default function OfferPopup() {
                 style={{
                   width: "100%",
                   padding: "12px",
-                  marginTop: "25px",
-                  borderRadius: "6px",
-                  border: "none",
+                  marginTop: "25px", 
+                  border: "1px solid #222",
                   color: "#222",
                 }}
               />
@@ -137,8 +136,7 @@ export default function OfferPopup() {
                   marginTop: "25px",
                   backgroundColor: "#53e6e6",
                   color: "white",
-                  padding: "12px",
-                  borderRadius: "6px",
+                  padding: "12px", 
                   border: "none",
                   cursor: "pointer",
                   width: "50%",
@@ -148,15 +146,15 @@ export default function OfferPopup() {
               >
                 CLAIM MY CODE
               </button>
-              <p className="mt-10 font-bold cursor-pointer" onClick={handleClose}>
+              <p className="mt-10 font-bold cursor-pointer myGray2" onClick={handleClose}>
                 No thanks, I will pay full price.
               </p>
             </form>
           </>
         ) : (
           <>
-            <h3 style={{ marginTop: "30px", color: "#c5e1a5" }}>🎉 Thank you!</h3>
-            <p style={{ fontSize: "18px", marginTop: "15px" }}>
+            <h3 className="myGray" style={{ marginTop: "30px", color: "#c5e1a5" }}>🎉 Thank you!</h3>
+            <p className="myGray" style={{ fontSize: "18px", marginTop: "15px" }}>
               Here is your exclusive discount code:
             </p>
             <div
@@ -192,7 +190,7 @@ export default function OfferPopup() {
                 {copied ? "Copied!" : "Copy"}
               </button>
             </div>
-            <p style={{ marginTop: "20px", fontSize: "16px" }}>
+            <p className="myGray2" style={{ marginTop: "20px", fontSize: "16px" }}>
               Use it at checkout to save 10% on your first order!
             </p>
           </>

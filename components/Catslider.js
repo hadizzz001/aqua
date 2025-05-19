@@ -55,7 +55,8 @@ const ResponsiveVideo = () => {
       <h1 className="center uppercase text-center text-3xl font-bold my-6 text-gray-700 px-4 myGray">
         Our Collections
       </h1>
-      <div className="flex flex-col gap-6 items-start px-4">
+     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 px-4">
+
         {categories.map((category, index) => (
           <motion.div
             key={index}

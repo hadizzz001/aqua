@@ -924,3 +924,13 @@ body{
   font-size: 0.875rem;
   margin-top: 0.25rem;
 }
+
+
+
+@media (min-width: 1200px) {
+    @media (pointer: fine) {
+        .xl\:pointer-fine\:br_bg-transparent {
+            background-color: #fff !important;
+        }
+    }
+}

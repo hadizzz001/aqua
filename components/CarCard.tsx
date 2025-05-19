@@ -23,7 +23,7 @@ const CarCard = ({ temp }: CarCardProps) => {
                                             <div className="w-[300px] h-[200px] relative  overflow-hidden group">
 
 
-                                                <img className="absolute w-full h-full object-cover group-hover:opacity-0"
+                                                <img className="absolute w-full h-full object-cover  "
                                                     src={img[0]} alt="Default" />
 
                                                 {(
@@ -44,30 +44,25 @@ const CarCard = ({ temp }: CarCardProps) => {
 
                                     </div>
                                 </div>
-                                <div className="ml-2 text-left initial:br_row-span-1 br_col-start-1 br_row-start-2 br_px-3 group-[.centered]/tile:br_justify-center group-[.centered]/tile:br_text-center">
-                                    <h3 style={{ height: "100px" }} className="br_text-base-sans-spaced br_line-clamp-2 sm:br_line-clamp-none edition:br_text-grey-500 edition:br_hidden first:edition:br_inline edition:before:br_content-['_–_'] apex:edition:br_text-grey-300">
-                                        <a
-                                            href={`/product?id=${_id}`}
-                                            className="br_text-current br_no-underline"
-                                        >
-                                            <h2 className="text-sm font-bold myGray  py-1">{title}</h2>
-                                            <div className="price-container br_inline-flex br_flex-wrap br_gap-x-2 br_items-baseline apex:br_text-white group-[.centered]/tile:br_justify-center">
-                                                <span className="font-light text-[12px] py-1 line-through text-gray-400 float-left  ">
+                                <div className="text-center flex flex-col items-center justify-center px-3">
+                                    <h3 style={{ height: "100px" }} className="text-center">
+                                        <a href={`/product?id=${_id}`} className="text-current no-underline">
+                                            <h2 className="text-sm font-bold myGray py-1">{title}</h2>
+                                            <div className="price-container inline-flex flex-wrap gap-x-2 items-baseline justify-center text-white">
+                                                <span className="font-light text-[11px] py-1 line-through text-gray-400">
                                                     ${parseFloat(price).toFixed(2)}
                                                 </span>
-                                                <span className="font-light text-[12px] py-1 rounded myRed float-left">
+                                                <span className="font-light text-[11px] py-1 rounded myRed">
                                                     ${parseFloat(discount).toFixed(2)}
                                                     <span className="ml-1 text-xs">
                                                         {Math.round(((price - discount) / price) * 100)}% off
                                                     </span>
                                                 </span>
-
                                             </div>
-
-
                                         </a>
                                     </h3>
                                 </div>
+
                             </div>
                         </span>
                     </center>

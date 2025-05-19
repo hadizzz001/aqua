@@ -139,7 +139,7 @@ export default function RootLayout({
         <CartProvider>
           <Navbar2 />
           <WhatsAppIcon />
-          <GoogleAnalytics gaId="G-CWL3GHDNXG" />
+          {/* <GoogleAnalytics gaId="" /> */}
           {children} 
           <Footer />
         </CartProvider>
