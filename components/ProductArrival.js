@@ -12,19 +12,20 @@ const YourComponent = () => {
         fetchCategories();
     }, []);
 
-    const fetchCategories = async () => {
-        try {
-            const response = await fetch('/api/products5', { cache: 'no-store' });
-            if (response.ok) {
-                const data = await response.json();
-                setAllTemps(data);
-            } else {
-                console.error('Failed to fetch categories');
-            }
-        } catch (error) {
-            console.error('Error fetching categories:', error);
-        }
-    };
+const fetchCategories = async () => {
+  try {
+    const response = await fetch('/api/products5', { cache: 'no-store' });
+    if (response.ok) {
+      const data = await response.json();
+      setAllTemps(data.slice(0, 10));  // take only first 10 products
+    } else {
+      console.error('Failed to fetch categories');
+    }
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+  }
+};
+
 
 
 

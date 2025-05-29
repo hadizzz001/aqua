@@ -9,18 +9,28 @@ const Body = () => {
   const [allTemp, setTemp] = useState()
   const [isActive1, setIsActive1] = useState(true);
   const [checkboxesData, setCheckboxesData] = useState([]);
-  const [checkedCategories, setCheckedCategories] = useState([]); // Store selected category IDs
-  const [touchedIndex, setTouchedIndex] = useState(null); // Track which image is touched
+  const [checkedCategories, setCheckedCategories] = useState([]); // Store selected category IDs 
+    const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
-  const handleTouchStart = (index) => {
-    setTouchedIndex(index);
-  };
+const fetchProducts = async (pageNum = 1) => {
+  const params = new URLSearchParams();
 
-  const handleTouchEnd = () => {
-    setTimeout(() => setTouchedIndex(null), 2000); // Reset after 2s
-  };
+  params.append('page', pageNum);
+  params.append('limit', 10);
+
+  checkedCategories.forEach(cat => params.append('category', cat)); 
+
+  const res = await fetch(`/api/productsz?${params.toString()}`);
+  const data = await res.json();
+
+  setTemp(data.products);
+  setTotalPages(data.totalPages);
+};
 
 
+
+ 
 
 
 
@@ -80,13 +90,14 @@ const Body = () => {
 
 
   useEffect(() => {
-    fetchCategories();
-    fetchProducts(); // Fetch all products initially
+    fetchCategories(); 
   }, []);
 
-  useEffect(() => {
-    fetchProducts(); // Re-fetch products when selected categories change
-  }, [checkedCategories]);
+useEffect(() => {
+  fetchProducts(page);
+}, [checkedCategories, page]);
+
+
 
   const fetchCategories = async () => {
     try {
@@ -98,26 +109,9 @@ const Body = () => {
     }
   };
 
-  const fetchProducts = async () => {
-    let url = "/api/products"; // Default: fetch all products
-    if (checkedCategories.length > 0) {
-      url = `/api/products2/${checkedCategories.join(",")}`;
-    }
-
-    try {
-      const response = await fetch(url);
-      if (response.ok) {
-        const data = await response.json();
-        setTemp(data);
-      } else {
-        console.error("Failed to fetch products");
-      }
-    } catch (error) {
-      console.error("Error fetching products:", error);
-    }
-  };
-
+ 
   const handleCheckboxChange = (categoryId) => {
+    setPage(1); 
     setCheckedCategories((prev) =>
       prev.includes(categoryId)
         ? prev.filter((id) => id !== categoryId) // Uncheck
@@ -291,20 +285,28 @@ const Body = () => {
                         key={item._id}
                         className="br_grid br_grid-cols-1 supports-subgrid:br_row-span-4 supports-subgrid:br_grid-rows-[subgrid]"
                       >
-                        <div className="relative inline-block">
-                          <img className="default-img" src={item.img[0]} alt="Default" />
+                        <div className="relative inline-block w-[300px] h-[300px]">
+                          <img
+                            src={item.img[0]}
+                            alt="Default"
+                            className="w-full h-full object-cover object-center rounded"
+                          />
 
                           {(
-                            // Check if single product and stock is 0
                             (item.type === 'single' && parseInt(item.stock) === 0) ||
-                            // Or if collection and all colors qty are 0
-                            (item.type === 'collection' && item.color?.every(color => parseInt(color.qty) === 0))
+                            (item.type === 'collection' &&
+                              item.color?.every(color =>
+                                color.sizes?.every(size => parseInt(size.qty) === 0)
+                              )
+                            )
                           ) && (
-                              <div className="absolute inset-0 bg-gray-600 bg-opacity-70 text-white flex items-center justify-center text-lg font-bold z-10">
+                              <div className="absolute inset-0 bg-gray-600 bg-opacity-70 text-white flex items-center justify-center text-lg font-bold z-10 rounded">
                                 Out of Stock
                               </div>
                             )}
+
                         </div>
+
 
 
                         <div className="Layout br_contents">
@@ -329,12 +331,36 @@ const Body = () => {
                                 </h3>
                                 <div className="price-container br_inline-flex br_flex-wrap br_gap-x-2 br_items-baseline apex:br_text-white group-[.centered]/tile:br_justify-center">
                                   <span className="font-light text-[13px] py-1 line-through text-gray-400 float-left  ">
-                                    ${parseFloat(item.price).toFixed(2)}
+                                    {!item.color?.some(c => c.sizes?.length > 0) && (
+                                      <span>${parseFloat(item.price).toFixed(2)}</span>
+                                    )}
+
                                   </span>
                                   <span className="font-light text-[13px] py-1 rounded myRed float-left">
-                                    ${parseFloat(item.discount).toFixed(2)}
+                                    {/* ${parseFloat(item.discount).toFixed(2)} */}
+                                    {item.type === 'single' || (item.type === 'collection' && !item.color)
+                                      ? (`$${item.discount}` || 'N/A')
+                                      : (item.type === 'collection' && item.color && item.color.some(c => c.sizes?.length)
+                                        ? (() => {
+                                          // Flatten all sizes' prices
+                                          const prices = item.color
+                                            .flatMap(c => c.sizes || [])
+                                            .map(s => s.price);
+
+                                          if (prices.length === 0) return 'N/A';
+
+                                          const minPrice = Math.min(...prices);
+                                          const maxPrice = Math.max(...prices);
+
+                                          return minPrice === maxPrice
+                                            ? `$${minPrice.toFixed(2)}`
+                                            : `$${minPrice.toFixed(2)} - $${maxPrice.toFixed(2)}`;
+                                        })()
+                                        : `$${item.discount}`
+                                      )
+                                    }
                                     <span className="ml-1 text-xs">
-                                      {Math.round(((item.price - item.discount) / item.price) * 100)}% off
+                                      25% off
                                     </span>
                                   </span>
                                 </div>
@@ -367,6 +393,42 @@ const Body = () => {
 
 
               </div>
+
+
+
+                            <div className="mt-4 mb-4 flex justify-center items-center space-x-4">
+                <button
+                  onClick={() => setPage(p => Math.max(p - 1, 1))}
+                  disabled={page === 1}
+                  className="px-4 py-2 rounded disabled:opacity-50 myGray text-3xl"
+                  style={{ color: '#999' }}
+                >
+                  &#8592;
+                </button>
+
+                <span
+                  className="flex items-center justify-center text-white text-[11px]"
+                  style={{
+                    width: '30px',
+                    height: '30px',
+                    backgroundColor: '#53e6e6',
+                    borderRadius: '50%',
+                  }}
+                >
+                  {page}
+                </span>
+
+                <button
+                  onClick={() => setPage(p => Math.min(p + 1, totalPages))}
+                  disabled={page === totalPages}
+                  className="px-4 py-2 rounded disabled:opacity-50 myGray text-3xl"
+                  style={{ color: '#999' }}
+                >
+                  &#8594;
+                </button>
+              </div>
+
+
             </div>
           </div>
         </div>

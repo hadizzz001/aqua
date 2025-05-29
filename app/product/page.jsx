@@ -27,6 +27,9 @@ const Page = () => {
   const [allTemp1, setAllTemps1] = useState();
   const [allTemp2, setAllTemps2] = useState();
   const [selectedColor, setSelectedColor] = useState(null);
+  const [selectedSize, setSelectedSize] = useState(null);
+  const [displayedPrice, setDisplayedPrice] = useState(null);
+  const [hasSizes, setHasSizes] = useState(false);
 
 
 
@@ -66,21 +69,22 @@ const Page = () => {
   }
 
 
-  useEffect(() => {
-    if (cat) { // Ensures `cat` is defined before running the effect
-      const fetchData = async () => {
-        try {
-          const response = await fetch(`api/products1/${cat}`);
-          const data = await response.json();
-          setAllTemps2(data);
-        } catch (error) {
-          console.error("Error fetching the description:", error);
-        }
-      };
+useEffect(() => {
+  if (cat) {  
+    const fetchData = async () => {
+      try {
+        const response = await fetch(`api/products1/${cat}`);
+        const data = await response.json();
+        setAllTemps2(data.slice(0, 5));  // Only take first 5 items
+      } catch (error) {
+        console.error("Error fetching the description:", error);
+      }
+    };
 
-      fetchData();
-    }
-  }, [cat]); // Runs only when `cat` changes and is defined
+    fetchData();
+  }
+}, [cat]);
+
 
 
 
@@ -125,9 +129,17 @@ const Page = () => {
       return;
     }
 
-    addToCart(allTemp1, quantity, selectedColor);
+    // Check if sizes exist for this color
+    const selectedColorObj = color?.find((c) => c.color === selectedColor);
+    if (selectedColorObj?.sizes?.length > 0 && !selectedSize) {
+      alert("Please select a size.");
+      return;
+    } 
+
+    addToCart(allTemp1, quantity, selectedColor, selectedSize);
     handleClickc();
   };
+
 
   const gotocart = () => {
     router.push('/checkout');
@@ -138,10 +150,31 @@ const Page = () => {
   const isSingle = type === 'single';
 
   const isCollectionOutOfStock = isCollection && (!color || color.every(c => c.qty === 0));
+  const isCollectionOutOfStock1 = isCollection && color?.every(color => color.sizes?.every(size => parseInt(size.qty) === 0) );
   const isSingleOutOfStock = isSingle && Number(stock) === 0;
-  const isOutOfStock = isCollectionOutOfStock || isSingleOutOfStock;
+  const isOutOfStock = isCollectionOutOfStock || isSingleOutOfStock || isCollectionOutOfStock1;
 
-  const availableColors = color?.filter(c => c.qty > 0);
+const availableColorsWithSizes = color?.filter(c =>
+  c.sizes?.some(size => size.qty > 0)
+);
+
+const availableColorsWithoutSizes = color?.filter(
+  c => (!c.sizes || c.sizes.length === 0) && c.qty > 0 // assuming a top-level qty field
+);
+
+
+
+
+
+
+  useEffect(() => {
+    if (Array.isArray(color) && color.some(c => Array.isArray(c.sizes) && c.sizes.length > 0)) {
+      setHasSizes(true);
+    } else {
+      setHasSizes(false);
+    }
+  }, [color]);
+
 
 
 
@@ -235,38 +268,126 @@ const Page = () => {
                       /><br />
                     </span>
 
-                    {isCollection && (
-                      <div className="mb-4">
-                        <h2 className="color-label">Choose a Color:</h2>
-                        <div className="color-options">
-                          {availableColors?.map((c, index) => (
-                            <div
-                              key={index}
-                              onClick={() => c.qty > 0 && setSelectedColor(c.color)}
-                              className={`color-circle ${selectedColor === c.color ? 'selected' : ''} ${c.qty === 0 ? 'disabled' : ''}`}
-                              style={{ backgroundColor: c.color }}
-                              title={`${c.color} - ${c.qty > 0 ? `${c.qty} left` : 'Out of stock'}`}
-                            />
-                          ))}
-                        </div>
-                        {!selectedColor && <p className="error-message">Please select a color.</p>}
-                      </div>
+{isCollection && (
+  <div className="mb-4">
+    <h2 className="color-label myGray">Choose a Color:</h2>
+    <div className="color-options">
+      {availableColorsWithSizes?.map((c, index) => (
+        <div
+          key={index}
+          onClick={() => {
+            setSelectedColor(c.color);
+            setSelectedSize(null);
+            setDisplayedPrice(null);
+          }}
+          className={`color-circle ${selectedColor === c.color ? 'selected' : ''}`}
+          style={{ backgroundColor: c.color }}
+          title={`${c.color}`}
+        />
+      ))}
+    </div>
 
+    {!selectedColor && <p className="error-message">Please select a color.</p>}
+
+    {selectedColor && availableColorsWithSizes.some(c => c.color === selectedColor) && (
+      <div className="mb-4">
+        <h2 className="size-label">Choose a Size:</h2>
+        <div className="size-options">
+          {availableColorsWithSizes
+            .find((c) => c.color === selectedColor)
+            ?.sizes?.filter((s) => s.qty > 0)
+            ?.map((s, idx) => (
+              <button
+                key={idx}
+                onClick={() => {
+                  setSelectedSize(s.size);
+                  setDisplayedPrice(s.price);
+                }}
+                className={`px-3 py-1 m-1 border rounded ${
+                  selectedSize === s.size ? 'bg-blue-500 text-white' : 'bg-gray-100'
+                } myGray`}
+              >
+                {s.size}
+              </button>
+            ))}
+        </div>
+      </div>
+    )}
+
+    {availableColorsWithoutSizes?.length > 0 && (
+      <div className="mt-4">
+        <h2 className="color-label myGray">Other Colors:</h2>
+        <div className="color-options">
+          {availableColorsWithoutSizes?.map((c, index) => (
+            <div
+              key={index}
+              onClick={() => {
+                setSelectedColor(c.color);
+                setSelectedSize(null);
+                setDisplayedPrice(c.price ?? null);
+              }}
+              className={`color-circle ${selectedColor === c.color ? 'selected' : ''}`}
+              style={{ backgroundColor: c.color }}
+              title={`${c.color}`}
+            />
+          ))}
+        </div>
+      </div>
+    )}
+  </div>
+)}
+
+
+
+
+
+
+
+
+
+
+
+                    {hasSizes ? (
+                      selectedSize ? (
+                        <div className="flex items-center space-x-2">
+                          <h1 className="mb-2 myGray line-through font-bold text-lg">
+                            ${(parseFloat(displayedPrice) * 1.25).toFixed(2)}
+                          </h1>
+
+                          <h1 className="mb-2 myRed font-bold text-lg">
+                            ${displayedPrice}
+                            <span className="ml-1 text-sm">
+                              25% off
+                            </span>
+                          </h1>
+                        </div>
+                      ) : (
+                        <></>
+                      )
+                    ) : (
+                      <div className="flex items-center space-x-2">
+                        <h1 className="mb-2 myGray line-through font-bold text-lg">${parseFloat(price).toFixed(2)}</h1>
+                        <h1 className="mb-2 myRed font-bold text-lg">
+                          ${discount}
+                          <span className="ml-1 text-sm">
+                            25% off
+                          </span>
+                        </h1>
+                      </div>
                     )}
 
 
 
 
-                    <div className="flex items-center space-x-2">
-                      <h1 className="mb-2 myGray line-through font-bold text-lg">${parseFloat(price).toFixed(2)}</h1>
-                      <h1 className="mb-2 myRed font-bold text-lg">${parseFloat(discount).toFixed(2)}
-                        <span className="ml-1 text-sm">
-                          {Math.round(((price - discount) / price) * 100)}% off
-                        </span>
-                      </h1>
 
 
-                    </div>
+
+
+
+
+
+
+
 
                   </div>
                   <div className="bagsFeaturesGrid__gridWrapper">
@@ -291,7 +412,7 @@ const Page = () => {
 
                         <form onSubmit={handleSubmit}>
                           <div className="">
-                            <QuantitySelector initialQty={quantity} onChange={setQuantity} productId={id} type={type} selectedColor={selectedColor} />
+                            <QuantitySelector initialQty={quantity} onChange={setQuantity} productId={id} type={type} selectedColor={selectedColor} selectedSize={selectedSize} />
                             <div className=""></div>
                             <div className="">
                               <span className="ProvidersSingleProduct--selected">

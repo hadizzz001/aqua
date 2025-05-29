@@ -52,34 +52,32 @@ export async function PATCH(request) {
 }
 
 
-
-
  
+
 export async function GET(request, { params }) {
-const [id, color] = params.id.split(',');
-console.log("productId: ", id);
-console.log("color: ", color);
-
-
   try {
+    const [id, color] = params.id.split(',');
+    console.log("productId:", id);
+    console.log("color:", color);
+
     const client = await clientPromise;
     const db = client.db("test");
     const collection = db.collection("Product");
 
-    // Find a product that has the specified color in the color array
+    // Find the product by ID and specific color
     const product = await collection.findOne(
-      { "color.color": color }, // matches color inside array of objects
-      { projection: { color: 1 } } // only return the color field
+      { 
+        _id: new ObjectId(id),
+        "color.color": color 
+      },
+      { projection: { color: 1 } }
     );
 
-    console.log("product: ", product);
-    
-
     if (!product) {
-      return NextResponse.json({ error: "Color not found" }, { status: 404 });
+      return NextResponse.json({ error: "Product or color not found" }, { status: 404 });
     }
 
-    // Find the exact color entry
+    // Find the specific color entry
     const colorEntry = product.color.find(entry => entry.color === color);
 
     if (!colorEntry) {
@@ -89,8 +87,9 @@ console.log("color: ", color);
     return NextResponse.json({ qty: colorEntry.qty }, { status: 200 });
 
   } catch (error) {
-    console.error("Error fetching color quantity:", error);
+    console.error("Error fetching product by ID and color:", error);
     return NextResponse.json({ error: "Failed to fetch quantity" }, { status: 500 });
   }
 }
+
 

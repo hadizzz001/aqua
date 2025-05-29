@@ -5,79 +5,54 @@ import { useSearchParams } from 'next/navigation'
 
 
 const Body = () => {
-  const [allTemp, setTemp] = useState()
   const searchParams = useSearchParams()
-  const search = searchParams.get('q')
-  const search2 = searchParams.get('cat')
-  const search3 = searchParams.get('subcat')
-  const [touchedIndex, setTouchedIndex] = useState(null); // Track which image is touched
+  const [allTemp, setTemp] = useState([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
-  const handleTouchStart = (index) => {
-    setTouchedIndex(index);
+  // Search query parameters from URL
+  const search = searchParams.get('q');
+  const search2 = searchParams.get('cat');
+
+
+
+
+
+
+
+
+  const fetchProducts = async (pageNum = 1) => {
+    try {
+      const params = new URLSearchParams();
+      params.append('page', pageNum);
+      params.append('limit', 10); // or any number you want
+
+      if (search) params.append('q', search);
+      if (search2) params.append('cat', search2);
+
+      const res = await fetch(`/api/productsz1?${params.toString()}`);
+      const data = await res.json();
+
+      setTemp(data.products || []);
+      setTotalPages(data.totalPages || 1);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    }
   };
-
-  const handleTouchEnd = () => {
-    setTimeout(() => setTouchedIndex(null), 2000); // Reset after 2s
-  };
-
-
-
-
-
-
-
-
-
-
-
 
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        // Fetch all products first
-        const response = await fetch('/api/products');
-        const data = await response.json();
-
-        // Filter data based on search criteria
-        let filteredData = data;
-
-        // Filter by search2 (arrival="yes")
-        if (search2) {
-          if (search2 === 'yes') {
-            filteredData = filteredData.filter(item => item.arrival === 'yes');
-          }
-          else {
-            filteredData = filteredData.filter(item => item.category.toLowerCase() === search2.toLowerCase());
-          }
-        }
+    fetchProducts(page);
+  }, [search, search2, page]);
 
 
+  const handleNextPage = () => {
+    if (page < totalPages) setPage(prev => prev + 1);
+  };
 
-
-        // Filter by search (title contains)
-        if (search) {
-          filteredData = filteredData.filter(item => item.title.toLowerCase().includes(search.toLowerCase()));
-        }
-
-        // Filter by search3 (subcategory)
-        if (search3) {
-          filteredData = filteredData.filter(item => item.subcategory && item.subcategory.toLowerCase() === search3.toLowerCase());
-        }
-
-        // Set the filtered data to state
-        setTemp(filteredData);
-      } catch (error) {
-        console.error("Error fetching products:", error);
-      }
-    };
-
-    fetchProducts();
-  }, []); // Add dependencies to trigger fetch on any search change
-
-
-
-
+  const handlePrevPage = () => {
+    if (page > 1) setPage(prev => prev - 1);
+  };
 
 
 
@@ -88,16 +63,6 @@ const Body = () => {
 
 
     <>
-
-
-
-
-
-
-
-
-
-
 
       <div className="br_min-h-screen br_relative mt-20">
 
@@ -141,19 +106,26 @@ const Body = () => {
                         key={item._id}
                         className="br_grid br_grid-cols-1 supports-subgrid:br_row-span-4 supports-subgrid:br_grid-rows-[subgrid]"
                       >
-                        <div className="relative inline-block">
-                          <img className="default-img" src={item.img[0]} alt="Default" />
+                        <div className="relative inline-block w-[300px] h-[300px]">
+                          <img
+                            src={item.img[0]}
+                            alt="Default"
+                            className="w-full h-full object-cover object-center rounded"
+                          />
 
                           {(
-                            // Check if single product and stock is 0
                             (item.type === 'single' && parseInt(item.stock) === 0) ||
-                            // Or if collection and all colors qty are 0
-                            (item.type === 'collection' && item.color?.every(color => parseInt(color.qty) === 0))
+                            (item.type === 'collection' &&
+                              item.color?.every(color =>
+                                color.sizes?.every(size => parseInt(size.qty) === 0)
+                              )
+                            )
                           ) && (
-                              <div className="absolute inset-0 bg-gray-600 bg-opacity-70 text-white flex items-center justify-center text-lg font-bold z-10">
+                              <div className="absolute inset-0 bg-gray-600 bg-opacity-70 text-white flex items-center justify-center text-lg font-bold z-10 rounded">
                                 Out of Stock
                               </div>
                             )}
+
                         </div>
 
 
@@ -180,12 +152,36 @@ const Body = () => {
                                 </h3>
                                 <div className="price-container br_inline-flex br_flex-wrap br_gap-x-2 br_items-baseline  group-[.centered]/tile:br_justify-center">
                                   <span className="font-light text-[13px] py-1 line-through text-gray-400 float-left  ">
-                                    ${parseFloat(item.price).toFixed(2)}
+                                    {!item.color?.some(c => c.sizes?.length > 0) && (
+                                      <span>${parseFloat(item.price).toFixed(2)}</span>
+                                    )}
+
                                   </span>
                                   <span className="font-light text-[13px] py-1 rounded myRed float-left">
-                                    ${parseFloat(item.discount).toFixed(2)}
+                                    {/* ${parseFloat(item.discount).toFixed(2)} */}
+                                    {item.type === 'single' || (item.type === 'collection' && !item.color)
+                                      ? (`$${item.discount}` || 'N/A')
+                                      : (item.type === 'collection' && item.color && item.color.some(c => c.sizes?.length)
+                                        ? (() => {
+                                          // Flatten all sizes' prices
+                                          const prices = item.color
+                                            .flatMap(c => c.sizes || [])
+                                            .map(s => s.price);
+
+                                          if (prices.length === 0) return 'N/A';
+
+                                          const minPrice = Math.min(...prices);
+                                          const maxPrice = Math.max(...prices);
+
+                                          return minPrice === maxPrice
+                                            ? `$${minPrice.toFixed(2)}`
+                                            : `$${minPrice.toFixed(2)} - $${maxPrice.toFixed(2)}`;
+                                        })()
+                                        : `$${item.discount}`
+                                      )
+                                    }
                                     <span className="ml-1 text-xs">
-                                      {Math.round(((item.price - item.discount) / item.price) * 100)}% off
+                                      25% off
                                     </span>
                                   </span>
                                 </div>
@@ -218,6 +214,39 @@ const Body = () => {
 
 
               </div>
+
+              <div className="mt-4 mb-4 flex justify-center items-center space-x-4">
+                <button
+                  onClick={() => setPage(p => Math.max(p - 1, 1))}
+                  disabled={page === 1}
+                  className="px-4 py-2 rounded disabled:opacity-50 myGray text-3xl"
+                  style={{ color: '#999' }}
+                >
+                  &#8592;
+                </button>
+
+                <span
+                  className="flex items-center justify-center text-white text-[11px]"
+                  style={{
+                    width: '30px',
+                    height: '30px',
+                    backgroundColor: '#53e6e6',
+                    borderRadius: '50%',
+                  }}
+                >
+                  {page}
+                </span>
+
+                <button
+                  onClick={() => setPage(p => Math.min(p + 1, totalPages))}
+                  disabled={page === totalPages}
+                  className="px-4 py-2 rounded disabled:opacity-50 myGray text-3xl"
+                  style={{ color: '#999' }}
+                >
+                  &#8594;
+                </button>
+              </div>
+
             </div>
           </div>
         </div>

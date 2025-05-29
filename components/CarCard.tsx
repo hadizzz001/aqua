@@ -20,11 +20,20 @@ const CarCard = ({ temp }: CarCardProps) => {
                                 <div className="initial:br_row-span-1 br_col-start-1 br_row-start-1 br_relative">
                                     <div className="br_aspect-[1/1] sm:br_aspect-square">
                                         <div className="br_w-full br_h-full br_relative br_flex br_items-center br_justify-center">
-                                            <div className="w-[300px] h-[200px] relative  overflow-hidden group">
-
-
+                                            {/* <div className="w-[300px] h-[200px] relative  overflow-hidden group"> 
                                                 <img className="absolute w-full h-full object-cover  "
-                                                    src={img[0]} alt="Default" />
+                                                    src={img[0]} alt="Default" /> 
+                                                <img
+                                                    src={img[0]}
+                                                    alt="Framed"
+                                                    className="w-full h-full object-cover rounded-xl"
+                                                />
+
+                                                <img
+                                                    src="https://res.cloudinary.com/dj61ewxvc/image/upload/v1747992781/001_w6zxs2.webp"  
+                                                    alt="Stain Frame"
+                                                    className="absolute top-0 left-0 w-full h-full pointer-events-none"
+                                                /> 
 
                                                 {(
                                                     // Check if single product and stock is 0
@@ -35,11 +44,30 @@ const CarCard = ({ temp }: CarCardProps) => {
                                                         <div className="absolute inset-0 bg-gray-600 bg-opacity-70 text-white flex items-center justify-center text-lg font-bold z-10">
                                                             Out of Stock
                                                         </div>
-                                                    )}
+                                                    )} 
+                                            </div> */}
+                                            
+                                                                    <div className="relative inline-block w-[300px] h-[300px]">
+                          <img
+                            src={img[0]}
+                            alt="Default"
+                            className="w-full h-full object-cover object-center rounded"
+                          />
 
+                          {(
+                            (type === 'single' && parseInt(stock) === 0) ||
+                            (type === 'collection' &&
+                              color?.every(color =>
+                                color.sizes?.every(size => parseInt(size.qty) === 0)
+                              )
+                            )
+                          ) && (
+                              <div className="absolute inset-0 bg-gray-600 bg-opacity-70 text-white flex items-center justify-center text-lg font-bold z-10 rounded">
+                                Out of Stock
+                              </div>
+                            )}
 
-                                            </div>
-
+                        </div>
                                         </div>
 
                                     </div>

@@ -42,21 +42,20 @@ const Cart = () => {
     };
 
 
-    useEffect(() => {
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      const response = await fetch(`api/products`);
+      const data = await response.json();
+      setAllTemps2(data.slice(0, 5));  // Only keep first 5 items
+    } catch (error) {
+      console.error("Error fetching the description:", error);
+    }
+  };
 
-        const fetchData = async () => {
-            try {
-                const response = await fetch(`api/products`);
-                const data = await response.json();
-                setAllTemps2(data);
-            } catch (error) {
-                console.error("Error fetching the description:", error);
-            }
-        };
+  fetchData();
+}, []);
 
-        fetchData();
-
-    }, []); // Runs only when `cat` changes and is defined
 
 
 
@@ -172,21 +171,12 @@ const Cart = () => {
 
 
                                                     </div>
-                                                    {errors[obj._id] && (
-                                                        <p style={{ color: 'red' }}>
-                                                            {errors[obj._id]}
-                                                            <a
-                                                                style={{ color: "#4acb4a", display: "inline" }}
-                                                                href={`/product?id=${obj._id}&&custom=1&&imgg=${obj.img[0]}`}
-                                                            >
-                                                                add now
-                                                            </a>
-                                                        </p>
-                                                    )}
+                                               
                                                     <div className="Checkout_Cart_LineItems_LineItem_Price">
                                                         <span className="Currency">
                                                             <span className="Currency_Monetary myGray">
-                                                                ${obj.discount * (localQuantities[obj._id] || 1)}
+                                                              {obj.type === 'collection' && obj.selectedSize ? obj.color.find(c => c.color === obj.selectedColor)?.sizes.find(s => s.size === obj.selectedSize)?.price * (localQuantities[obj._id]) : obj.discount * (localQuantities[obj._id] || 1)}
+ 
                                                             </span>
                                                             <span className="Currency_Code myGray">USD</span>
                                                         </span>
@@ -216,7 +206,8 @@ const Cart = () => {
                                         <div className="Checkout_Cart_LineItems_LineItem_Details">
                                             <div className="Checkout_Cart_LineItems_LineItem_Price">
                                                 <span className="Currency">
-                                                    <span className="Currency_Monetary">Total: ${subtotal}</span>
+                                                    <span className="Currency_Monetary">Total: ${subtotal.toFixed(2)}</span>
+
                                                     <span className="Currency_Code">USD</span>
                                                 </span>
                                             </div>

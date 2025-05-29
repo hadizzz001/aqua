@@ -8,81 +8,90 @@ const WhatsAppButton = ({ inputs, items, total, delivery, code }) => {
 
 
 
-    const createOrder = async () => {
-        try {
-            // Step 1: Decrease stock for each product in the order
-            for (const item of items) {
-                console.log("item ",item);
-                
-                const quantityToDecrease = parseInt(item.quantity, 10); // Convert quantity to integer
+const createOrder = async () => {
+  try {
+    // 1. Update stock
+for (const item of items) {
+  const quantityToDecrease = parseInt(item.quantity, 10);
 
-                if (item.type === 'single') {
-                    const response = await fetch(`/api/stock/${item._id}`, {
-                        method: "PATCH",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify({ qty: quantityToDecrease }),
-                    });
+  let url;
+  let body;
 
-                    const result = await response.json();
-
-                    if (!response.ok) {
-                        throw new Error(result.error || "Failed to update stock");
-                    }
-                }
-                else {
-                    const response = await fetch(`/api/stock1/${item._id}`, {
-                        method: "PATCH",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify({ id:item._id, color: item.selectedColor, qty: quantityToDecrease }),
-                    });
-
-                    const result = await response.json();
-
-                    if (!response.ok) {
-                        throw new Error(result.error || "Failed to update stock");
-                    }
-                }
-
-            }
-
-            // Step 2: If stock update is successful, create the order
-            const orderResponse = await fetch("/api/sendOrder", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    items,
-                    inputs,
-                    total,
-                    delivery,
-                    code,
-
-                }),
-            });
-
-            if (!orderResponse.ok) {
-                throw new Error("Failed to create order");
-            }
-
-            console.log("Order created successfully!");
-            alert("Order placed successfully!");
-
-        } catch (error) {
-            console.error("Error processing order:", error);
-            alert(error.message || "Something went wrong");
-        }
+  if (item.type === 'single') {
+    url = `/api/stock/${item._id}`;
+    body = { qty: quantityToDecrease };
+  } else if (item.type === 'collection' && item.selectedSize) {
+    url = `/api/stock2/${item._id}`;
+    body = {
+      id: item._id,
+      qty: quantityToDecrease,
+      color: item.selectedColor,
+      size: item.selectedSize
     };
+  } else {
+    url = `/api/stock1/${item._id}`;
+    body = {
+      id: item._id,
+      color: item.selectedColor,
+      qty: quantityToDecrease
+    };
+  }
+
+  const response = await fetch(url, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const result = await response.json();
+    throw new Error(result.error || "Failed to update stock");
+  }
+}
+
+
+    // 2. Save order (optional) 
+    const orderResponse = await fetch("/api/sendOrder", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items, inputs, total, delivery, code }),
+    });
+
+    if (!orderResponse.ok) {
+      throw new Error("Failed to create order");
+    }
+
+    // 3. Send email via server action (through API)
+    const emailResponse = await fetch("/api/sendEmail3", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        items,
+        inputs,
+        subtotal,
+        delivery,
+        total,
+      }),
+    });
+
+    if (!emailResponse.ok) {
+      throw new Error("Failed to send email");
+    }
+
+    alert("Order placed successfully!");
+
+  } catch (error) {
+    console.error("Error processing order:", error);
+    alert(error.message || "Something went wrong");
+  }
+};
+
 
 
 
     const handleClick = async () => {
         if (!validateInputs(inputs)) {
-            setError('All fields are required and on the right format.');
+            setError('Please fill the required fields and on the right format.');
             return;
         }
 
@@ -94,11 +103,13 @@ const WhatsAppButton = ({ inputs, items, total, delivery, code }) => {
     };
 
     const validateInputs = (inputs) => {
-        const { address, fname, lname, phone, email } = inputs;
+        const {  country, city, address, fname, lname, phone, email } = inputs;
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
         return (
+            country &&
+            city && 
             address &&
             fname &&
             lname &&
@@ -124,7 +135,7 @@ const WhatsAppButton = ({ inputs, items, total, delivery, code }) => {
 export default WhatsAppButton;
 
 const createWhatsAppURL = (inputs, items, total, delivery, code) => {
-    const { address, fname, lname, phone, email } = inputs;
+    const { country,city,apt, address, fname, lname, phone, email } = inputs;
 
     // Calculate the total amount
     const totalAmount = items.reduce((sum, item) => sum + item.discount * item.quantity, 0);
@@ -137,7 +148,11 @@ const createWhatsAppURL = (inputs, items, total, delivery, code) => {
     Email: ${email}
     Name: ${fname} ${lname} 
     Phone: ${phone}
+    Country: ${country}
+    City: ${city}
     Address: ${address}
+    Apt-floor: ${apt}
+
 
     *Order Details:*
     ${items.map((item, index) => `
@@ -146,6 +161,7 @@ const createWhatsAppURL = (inputs, items, total, delivery, code) => {
       - Quantity: ${item.quantity}
       - Price: $${item.discount}
       - Color: ${item.selectedColor}
+      - Size: ${item.selectedSize}
       - Image: ${item.img[0]} 
     `).join('\n')}
 

@@ -14,7 +14,7 @@ const MyCarousel = () => {
         playsInline
       >
         <source
-          src="https://res.cloudinary.com/dj61ewxvc/video/upload/v1747400638/370c7b22eb6f44428895c907388dd0d0_ttplhk.mp4"
+          src="vid.mp4"
           type="video/mp4"
         />
         Your browser does not support the video tag.

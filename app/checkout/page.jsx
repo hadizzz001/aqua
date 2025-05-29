@@ -3,11 +3,14 @@
 
 
 import { useState, useEffect } from "react";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheckCircle } from '@fortawesome/free-solid-svg-icons';
-
 import { useCart } from '../context/CartContext';
 import WhatsAppButton from "../../components/WhatsAppButton";
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import axios from 'axios';
+import intlTelInput from 'intl-tel-input';
+import 'intl-tel-input/build/css/intlTelInput.css';
+
 
 
 const page = () => {
@@ -15,38 +18,33 @@ const page = () => {
   const { cart, removeFromCart, quantities, subtotal, addToCart } = useCart();
   const [localQuantities, setLocalQuantities] = useState(quantities);
   const [phone, setPhone] = useState("");
-  const [isOpen, setIsOpen] = useState(false);
-
+  const [isOpen, setIsOpen] = useState(false); 
   const [promoCode, setPromoCode] = useState("");
   const [promoCodes, setPromoCodes] = useState([]); // Store promo codes from API
   const [usedAbcd1234, setUsedAbcd1234] = useState(false);
   const [discountApplied, setDiscountApplied] = useState(false);
-  const [deliveryFee, setDeliveryFee] = useState(subtotal > 50 ? 0 : 4);
+  const [deliveryFee, setDeliveryFee] = useState(subtotal > 50 ? 0 : 5);
   const [total, setTotal] = useState((subtotal + deliveryFee).toFixed(2));
-
-
-
+  const [showLink, setShowLink] = useState(false);
+  const [country, setCountry] = useState('');
   const [inputs, setInputs] = useState({
     fname: "",
     lname: "",
     phone: "",
+    country: '',
+    city: '',
+    apt: '',
     address: '',
     email: '',
   });
 
+  const [cities, setCities] = useState([]);
+  const [countryData, setCountryData] = useState({
+    code: '',
+    flag: '',
+    dial: '',
+  }); 
 
-  const handleTextboxChange = (textboxName) => (e) => {
-    if (textboxName == "phone") {
-      // Allow digits and one dot
-      const numericValue = e.target.value.replace(/[^0-9.]/g, '');
-      setPhone(numericValue);
-    }
-
-    setInputs((prevValues) => ({
-      ...prevValues,
-      [textboxName]: e.target.value,
-    }));
-  };
 
 
 
@@ -54,18 +52,7 @@ const page = () => {
     removeFromCart(itemId);
   };
 
-
-
-
-
-
-
-
-
-
-
-
-
+ 
 
 
 
@@ -86,13 +73,141 @@ const page = () => {
     }
 
     // Update delivery fee when subtotal changes
-    setDeliveryFee(subtotal > 50 ? 0 : 4);
+    // setDeliveryFee(subtotal > 50 ? 0 : 4);
   }, [subtotal]);
 
   useEffect(() => {
     // Update total whenever subtotal or delivery fee changes
     setTotal((subtotal + deliveryFee).toFixed(2));
   }, [subtotal, deliveryFee]);
+
+  useEffect(() => {
+  const fetchCountry = async () => {
+    try {
+      const response = await axios.get('https://ipwho.is/');
+      const countryName = response.data.country; // ipwho.is uses "country" key
+      setCountry(countryName);
+    } catch (error) {
+      console.error('Failed to detect country:', error);
+    }
+  };
+
+  fetchCountry();
+}, []);
+
+  // 2. Fetch cities based on detected country
+  useEffect(() => {
+    const fetchCities = async () => {
+      if (!country) return;
+
+      try {
+        const response = await axios.post('https://countriesnow.space/api/v0.1/countries/cities', {
+          country,
+        });
+
+        if (response.data?.data) {
+          setCities(response.data.data);
+        } else {
+          setCities([]);
+        }
+      } catch (error) {
+        console.error('Failed to fetch cities:', error);
+        setCities([]);
+      }
+    };
+
+    fetchCities();
+
+    setInputs((prevValues) => ({
+      ...prevValues,
+      country: country,
+    }));
+  }, [country]);
+
+ 
+
+const handleTextboxChange = (textboxName) => (e) => {
+  let value = e.target.value;
+
+  if (textboxName === "phone") {
+    // Allow leading '+', then remove all non-digit characters except for that leading '+'
+    if (value.startsWith('+')) {
+      value = '+' + value.slice(1).replace(/[^0-9]/g, '');
+    } else {
+      value = value.replace(/[^0-9]/g, '');
+    }
+
+    const numericValue = value.replace(/[^0-9]/g, '');
+    const isValidPhone = numericValue.length >= 2;
+
+    let formattedPhone = value;
+
+    if (
+      isValidPhone &&
+      countryData?.dial &&
+      !numericValue.startsWith(countryData.dial.replace('+', ''))
+    ) {
+      const dial = countryData.dial;
+      formattedPhone = dial + numericValue;
+    }
+
+    setPhone(formattedPhone);
+    setInputs((prevValues) => ({
+      ...prevValues,
+      phone: formattedPhone,
+    }));
+
+    return;
+  }
+
+  setInputs((prevValues) => ({
+    ...prevValues,
+    [textboxName]: value,
+  }));
+};
+
+
+
+useEffect(() => {
+  // Auto-detect country and dial code using ipwho.is
+  fetch('https://ipwho.is/')
+    .then((res) => res.json())
+    .then((data) => {
+      setCountryData({
+        code: data.country_code, // e.g., "LB"
+        flag: `https://flagcdn.com/24x18/${data.country_code.toLowerCase()}.png`,
+        dial: `+${data.calling_code}`, // ✅ use calling_code from ipwho.is
+      });
+    })
+    .catch((error) => console.error('Failed to get country info:', error));
+}, []);
+
+
+
+
+useEffect(() => {
+  if (subtotal > 50) {
+    setDeliveryFee(0);
+    return;
+  }
+
+  const normalizedCity = inputs.city?.trim().toLowerCase();
+  if (normalizedCity === 'beirut') {
+    setDeliveryFee(3);
+  } else {
+    setDeliveryFee(5);
+  }
+}, [subtotal, inputs.city]);
+
+
+
+
+
+
+
+
+
+
 
   const applyPromo = (event) => {
     event.preventDefault(); // Prevent page reload
@@ -129,6 +244,119 @@ const page = () => {
       alert("Invalid promo code!");
     }
   };
+
+
+  const handleCheckboxChange = (e) => {
+    setShowLink(e.target.checked);
+  };
+
+
+
+
+
+
+
+  const generatePDF = async () => {
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.text('Product List PDF', 10, 10);
+
+    const imagePromises = cart.map(async (item) => {
+      const imageUrl = item.img[0];
+      const imageData = await toDataURL(imageUrl);
+      return {
+        ...item,
+        imageData,
+      };
+    });
+
+    const itemsWithImages = await Promise.all(imagePromises);
+
+    const tableData = itemsWithImages.map((item) => [
+      { content: '', image: item.imageData },
+      item.title,
+      item.category,
+      `$${item.discount}`,
+      item.quantity,
+      item.selectedColor,
+    ]);
+
+    // Utility to chunk array into groups of 8
+    const chunkArray = (arr, size) =>
+      Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
+        arr.slice(i * size, i * size + size)
+      );
+
+    const chunkedData = chunkArray(tableData, 8);
+    let startY = 20;
+
+    chunkedData.forEach((chunk, index) => {
+      if (index > 0) {
+        doc.addPage();
+        startY = 10;
+        doc.setFontSize(18);
+        doc.text('Product List PDF (continued)', 10, startY);
+        startY += 10;
+      }
+
+      autoTable(doc, {
+        startY,
+        head: [['Image', 'Title', 'Category', 'Price', 'Quantity', 'Color']],
+        body: chunk,
+        didDrawCell: (data) => {
+          if (data.column.index === 0 && data.cell.raw.image) {
+            doc.addImage(
+              data.cell.raw.image,
+              'JPEG',
+              data.cell.x + 2,
+              data.cell.y + 2,
+              25,
+              25
+            );
+          }
+        },
+        columnStyles: {
+          0: { cellWidth: 30 },
+        },
+        headStyles: {
+          minCellHeight: 10,
+          valign: 'middle',
+          halign: 'center',
+        },
+        bodyStyles: {
+          minCellHeight: 30,
+          valign: 'middle',
+          halign: 'center',
+        },
+        styles: {
+          fontSize: 10,
+          cellPadding: 3,
+        },
+      });
+    });
+
+    doc.save('cart-items.pdf');
+  };
+
+  const toDataURL = async (url) => {
+    const res = await fetch(url);
+    const blob = await res.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.readAsDataURL(blob);
+    });
+  };
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -532,6 +760,8 @@ const page = () => {
                                       <div className="wfacp-comm-form-detail clearfix">
                                         <div className="wfacp-row">
 
+                                          <h1 className="form-row form-row-wide wfacp-form-control-wrapper text-bold myGray">Contact</h1>
+
                                           <p
                                             className="form-row form-row-wide wfacp-form-control-wrapper wfacp-col-full  wfacp_field_required validate-required validate-email validate-email"
                                             id="billing_email_field"
@@ -568,6 +798,8 @@ const page = () => {
                                               data-key="billing_email_field"
                                             />
                                           </p>
+
+                                           <h1 className="form-row form-row-wide wfacp-form-control-wrapper text-bold myGray">Delivery</h1>
                                           <p
                                             className="form-row form-row-first wfacp-form-control-wrapper wfacp-col-left-half  wfacp_field_required validate-required"
                                             id="billing_first_name_field"
@@ -640,7 +872,96 @@ const page = () => {
                                               data-key="billing_last_name_field"
                                             />
                                           </p>
+
+
+
+
                                           <p
+                                            className="form-row form-row-wide wfacp-form-control-wrapper wfacp-col-full  wfacp_field_required validate-required validate-email validate-email"
+                                            id="billing_country_field"
+                                            data-priority={110}
+                                          >
+                                            <label
+                                              htmlFor="billing_country"
+                                              className="wfacp-form-control-label"
+                                            >
+                                              Country&nbsp;
+                                              <abbr
+                                                className="required"
+                                                title="required"
+                                              >
+                                                *
+                                              </abbr>
+                                            </label>
+                                            <span className="woocommerce-input-wrapper">
+                                              <input
+                                                type="text"
+                                                value={inputs.country}
+                                                className="input-text wfacp-form-control"
+                                                name="billing_country"
+                                                id="billing_country"
+                                                placeholder="Country *"
+                                                defaultValue=""
+                                                autoComplete="country"
+                                                readOnly
+                                              />
+                                            </span>
+                                          </p>
+
+
+
+
+
+
+
+
+
+
+                                          <p
+                                            className="form-row form-row-wide wfacp-form-control-wrapper wfacp-col-full  wfacp_field_required validate-required validate-email validate-email"
+                                            id="billing_city_field"
+                                            data-priority={110}
+                                          >
+                                            <label
+                                              htmlFor="billing_city"
+                                              className="wfacp-form-control-label"
+                                            >
+                                              City&nbsp;
+                                              <abbr
+                                                className="required"
+                                                title="required"
+                                              >
+                                                *
+                                              </abbr>
+                                            </label>
+                                            <span className="woocommerce-input-wrapper">
+
+
+                                              <select
+                                                value={inputs.city}
+                                                onChange={(e) => setCity(e.target.value)}
+                                                onChange={handleTextboxChange('city')}
+                                                className="input-text wfacp-form-control"
+                                                name="billing_city"
+                                                id="billing_city"
+                                                placeholder="City *"
+                                                required
+                                              >
+                                                <option value="">Select City*</option>
+                                                {cities.map((cityName, index) => (
+                                                  <option key={index} value={cityName}>{cityName}</option>
+                                                ))}
+                                              </select>
+                                            </span>{" "}
+                                            <span
+                                              className="wfacp_inline_error"
+                                              data-key="billing_city_field"
+                                            />
+                                          </p>
+
+
+
+                                        <p
                                             className="form-row form-row-wide wfacp-form-control-wrapper wfacp-col-full  wfacp_field_required validate-required validate-email validate-email"
                                             id="billing_address_field"
                                             data-priority={110}
@@ -676,42 +997,90 @@ const page = () => {
                                               data-key="billing_email_field"
                                             />
                                           </p>
+
+
+
+
+
                                           <p
                                             className="form-row form-row-wide wfacp-form-control-wrapper wfacp-col-full  wfacp_field_required validate-required validate-email validate-email"
-                                            id="billing_phone_field"
+                                            id="billing_apt_field"
                                             data-priority={110}
                                           >
                                             <label
-                                              htmlFor="billing_phone"
+                                              htmlFor="billing_apt"
                                               className="wfacp-form-control-label"
                                             >
+                                              Apt - Floor 
+                                            </label>
+                                            <span className="woocommerce-input-wrapper">
+                                              <input
+                                                value={inputs.apt}
+                                                onChange={handleTextboxChange('apt')}
+                                                type="text"
+                                                className="input-text wfacp-form-control"
+                                                name="billing_apt"
+                                                id="billing_apt"
+                                                placeholder="Aptartment - Floor (optional)"
+                                                defaultValue=""
+                                                required
+                                              />
+                                            </span>{" "}
+                                            <span
+                                              className="wfacp_inline_error"
+                                              data-key="billing_apt_field"
+                                            />
+                                          </p>
+ 
+
+                                          <p
+                                            className="form-row form-row-wide wfacp-form-control-wrapper wfacp-col-full wfacp_field_required"
+                                            id="billing_phone_field"
+                                            data-priority={110}
+                                          >
+                                            <label htmlFor="billing_phone" className="wfacp-form-control-label">
                                               Phone&nbsp;
-                                              <abbr
-                                                className="required"
-                                                title="required"
-                                              >
+                                              <abbr className="required" title="required">
                                                 *
                                               </abbr>
                                             </label>
-                                            <span className="woocommerce-input-wrapper">
+
+                                            <div className="flex items-center gap-7">
+                                              {countryData.flag && (
+                                                <span className="flex items-center gap-1 text-sm">
+                                                  <img
+                                                    src={countryData.flag}
+                                                    alt={countryData.code}
+                                                    width={24}
+                                                    height={18}
+                                                    style={{ borderRadius: '2px' }}
+                                                  />
+                                                  <span className="myGray">{countryData.dial}</span>
+                                                </span>
+                                              )}
                                               <input
                                                 type="text"
                                                 className="input-text wfacp-form-control"
                                                 name="billing_phone"
                                                 id="billing_phone"
                                                 placeholder="Phone *"
-                                                defaultValue=""
-                                                autoComplete="phone"
+                                                autoComplete="tel"
                                                 value={phone}
                                                 onChange={handleTextboxChange('phone')}
                                                 required
                                               />
-                                            </span>{" "}
-                                            <span
-                                              className="wfacp_inline_error"
-                                              data-key="billing_email_field"
-                                            />
+                                            </div>
+
+                                            <span className="wfacp_inline_error" data-key="billing_phone_field" />
                                           </p>
+
+
+
+
+
+
+
+
 
 
                                           {" "}
@@ -731,7 +1100,7 @@ const page = () => {
                                       data-field-count={2}
                                     >
                                       <div className="wfacp_internal_form_wrap wfacp-comm-title ">
-                                        <h2 className="wfacp_section_heading wfacp_section_title ">
+                                        <h2 className="wfacp_section_heading wfacp_section_title myGray">
                                           Order Summary
                                         </h2>
                                       </div>
@@ -748,7 +1117,7 @@ const page = () => {
                                             id="order_summary_field"
                                             data-time={1712942806}
                                           >
-                                            <label className="wfacp-order-summary-label">Order Summary</label>
+                                            <label className="wfacp-order-summary-label myGray"  >Order Summary</label>
                                             <div className="wfacp_anim wfacp_order_summary_container">
                                               <table className="shop_table woocommerce-checkout-review-order-table elementor-hific">
                                                 <thead>
@@ -797,7 +1166,8 @@ const page = () => {
                                                                 <span className="woocommerce-Price-currencySymbol">
                                                                   $
                                                                 </span>
-                                                                {(obj.discount * localQuantities[obj._id] || obj.discount).toFixed(2)}
+                                                                {obj.type === 'collection' && obj.selectedSize ? obj.color.find(c => c.color === obj.selectedColor)?.sizes.find(s => s.size === obj.selectedSize)?.price * (localQuantities[obj._id]) : obj.discount * (localQuantities[obj._id] || 1)}
+ 
                                                               </bdi>
                                                             </span>{" "}
                                                           </div>
@@ -864,6 +1234,32 @@ const page = () => {
                                                     {discountApplied ? "Done!" : "Apply"} {/* Show "Done!" when discount is applied */}
                                                   </button>
                                                 </div>
+
+                                                <div>
+                                                  <label className="custom-checkbox-container myGray clickText  ">
+                                                    <span className="ml-[25px]"></span>I am business or would like a b2b offer
+                                                    <input type="checkbox" onChange={handleCheckboxChange} />
+                                                    <span className="custom-checkmark"></span>
+                                                  </label>
+
+                                                  {showLink && (
+                                                    <a
+                                                      href="#"
+                                                      onClick={(e) => {
+                                                        e.preventDefault();
+                                                        generatePDF();
+                                                      }}
+                                                      style={{ display: 'block', marginTop: '1em', color: 'blue' }}
+                                                      className="clickText1"
+                                                    >
+                                                      Generate Product PDF
+                                                    </a>
+                                                  )}
+                                                </div>
+
+
+
+
 
                                                 <tfoot>
                                                   <tr className="cart-subtotal">

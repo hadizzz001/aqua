@@ -8,19 +8,21 @@ const ResponsiveVideo = () => {
   const [categories, setCategories] = useState([]);
   const router = useRouter();
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await fetch("/api/category");
-        const data = await response.json();
-        setCategories(data.slice(0, 3));
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-      }
-    };
+useEffect(() => {
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch("/api/category");
+      const data = await response.json();
+      const selectedCategories = [data[0], data[1], data[3]].filter(Boolean); // Ensure items exist
+      setCategories(selectedCategories);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
 
-    fetchCategories();
-  }, []);
+  fetchCategories();
+}, []);
+
 
   const renderMedia = (category) => {
     if (category.img[0].endsWith(".mp4")) {

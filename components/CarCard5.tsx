@@ -23,23 +23,25 @@ const CarCard5 = ({ temp }: CarCardProps) => {
                                     <div className="br_aspect-[1/1] sm:br_aspect-square">
 
                                         <div className="br_w-full br_h-full br_relative br_flex br_items-center br_justify-center">
-                                            <div className="w-[200px] h-[150px] relative  overflow-hidden group">
-
-
-                                                <img className="absolute w-full h-full object-cover  "
-                                                    src={img[0]} alt="Default" />
+                                            <div className="relative inline-block w-[200px] h-[200px]">
+                                                <img
+                                                    src={img[0]}
+                                                    alt="Default"
+                                                    className="w-full h-full object-cover object-center rounded"
+                                                />
 
                                                 {(
-                                                    // Check if single product and stock is 0
                                                     (type === 'single' && parseInt(stock) === 0) ||
-                                                    // Or if collection and all colors qty are 0
-                                                    (type === 'collection' && color?.every(color => parseInt(color.qty) === 0))
+                                                    (type === 'collection' &&
+                                                        color?.every(color =>
+                                                            color.sizes?.every(size => parseInt(size.qty) === 0)
+                                                        )
+                                                    )
                                                 ) && (
-                                                        <div className="absolute inset-0 bg-gray-600 bg-opacity-70 text-white flex items-center justify-center text-lg font-bold z-10">
+                                                        <div className="absolute inset-0 bg-gray-600 bg-opacity-70 text-white flex items-center justify-center text-lg font-bold z-10 rounded">
                                                             Out of Stock
                                                         </div>
                                                     )}
-
 
                                             </div>
 
