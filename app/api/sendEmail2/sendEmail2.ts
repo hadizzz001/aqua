@@ -58,8 +58,8 @@ Delivery fee: $${delivery}
 
   await resend.emails.send({
     from: "info@anazon.hadizproductions.com",
-    to: "alihadimedlej001@gmail.com",
-    // to: "info@aquanotch.com",
+    // to: "alihadimedlej001@gmail.com",
+    to: "info@aquanotch.com",
     subject: "New Order from Website",
     text: message,
   });
