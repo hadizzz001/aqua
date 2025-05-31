@@ -41,7 +41,11 @@ ${items.map((item: any, index: number) => `
   Item ${index + 1}:
   - Name: ${item.title} 
   - Quantity: ${item.quantity}
-  - Price: $${item.discount}
+  - Price: $${(() => {
+      const colorObj = item.color?.find(c => c.color === item.selectedColor);
+      const sizeObj = colorObj?.sizes?.find(s => s.size === item.selectedSize);
+      return sizeObj?.price ?? item.discount;
+    })()}
   - Color: ${item.selectedColor}
   - Size: ${item.selectedSize}
   - Image: ${item.img[0]}
@@ -54,9 +58,10 @@ Delivery fee: $${delivery}
 
   await resend.emails.send({
     from: "info@anazon.hadizproductions.com",
-    to: "info@aquanotch.com",
+    to: "alihadimedlej001@gmail.com",
+    // to: "info@aquanotch.com",
     subject: "New Order from Website",
     text: message,
   });
- 
+
 };

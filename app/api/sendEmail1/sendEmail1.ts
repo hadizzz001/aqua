@@ -11,7 +11,7 @@ export const sendEmail1 = async (formData: FormData) => {
 
      
         resend.emails.send({
-            from: "info@anazon.hadizproductions.com",
+            from: "info@anazon.hadizproductions.com", 
             to: "info@aquanotch.com",
             subject: "New message from your website customer",
             text: "Name: " + name + "\n" + "Message: " + message,
