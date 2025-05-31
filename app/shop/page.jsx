@@ -10,27 +10,27 @@ const Body = () => {
   const [isActive1, setIsActive1] = useState(true);
   const [checkboxesData, setCheckboxesData] = useState([]);
   const [checkedCategories, setCheckedCategories] = useState([]); // Store selected category IDs 
-    const [page, setPage] = useState(1);
+  const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-const fetchProducts = async (pageNum = 1) => {
-  const params = new URLSearchParams();
+  const fetchProducts = async (pageNum = 1) => {
+    const params = new URLSearchParams();
 
-  params.append('page', pageNum);
-  params.append('limit', 10);
+    params.append('page', pageNum);
+    params.append('limit', 10);
 
-  checkedCategories.forEach(cat => params.append('category', cat)); 
+    checkedCategories.forEach(cat => params.append('category', cat));
 
-  const res = await fetch(`/api/productsz?${params.toString()}`);
-  const data = await res.json();
+    const res = await fetch(`/api/productsz?${params.toString()}`);
+    const data = await res.json();
 
-  setTemp(data.products);
-  setTotalPages(data.totalPages);
-};
+    setTemp(data.products);
+    setTotalPages(data.totalPages);
+  };
 
 
 
- 
+
 
 
 
@@ -90,12 +90,12 @@ const fetchProducts = async (pageNum = 1) => {
 
 
   useEffect(() => {
-    fetchCategories(); 
+    fetchCategories();
   }, []);
 
-useEffect(() => {
-  fetchProducts(page);
-}, [checkedCategories, page]);
+  useEffect(() => {
+    fetchProducts(page);
+  }, [checkedCategories, page]);
 
 
 
@@ -109,9 +109,9 @@ useEffect(() => {
     }
   };
 
- 
+
   const handleCheckboxChange = (categoryId) => {
-    setPage(1); 
+    setPage(1);
     setCheckedCategories((prev) =>
       prev.includes(categoryId)
         ? prev.filter((id) => id !== categoryId) // Uncheck
@@ -125,17 +125,7 @@ useEffect(() => {
   return (
 
 
-    <>
-
-
-
-
-
-
-
-
-
-
+    <> 
 
       <div className="br_min-h-screen br_relative md:mt-20 mt-20">
 
@@ -246,8 +236,8 @@ useEffect(() => {
 
 
 
-          <div className="br_flex-1" onClick={handleClick1}>
-            <div className="br_flex br_justify-between br_items-center br_gap-4 br_mb-2 br_px-4 br_my-4 md:br_justify-end">
+          <div className="br_flex-1" >
+            <div className="br_flex br_justify-between br_items-center br_gap-4 br_mb-2 br_px-4 br_my-4 md:br_justify-end" onClick={handleClick1}>
               <div className="br_flex br_gap-4 br_items-center md:br_hidden">
                 <button className="myGray br_leading-5 br_text-base-sans-bold-stretched br_px-4 br_py-2 br_rounded br_border br_border-solid br_flex br_gap-2 br_justify-center br_items-center br_whitespace-nowrap br_bg-transparent br_text-white br_border-grey-300 myBB">
                   <svg width={16} height={14}>
@@ -280,12 +270,12 @@ useEffect(() => {
 
                 {allTemp && allTemp.length > 0 ? (
                   allTemp.map((item, index) => (
-                    <a href={`/product?id=${item._id}&&imgg=${item.img[0]}`}  >
+                    <a href={`/product?id=${item._id}`}  >
                       <div
                         key={item._id}
                         className="br_grid br_grid-cols-1 supports-subgrid:br_row-span-4 supports-subgrid:br_grid-rows-[subgrid]"
                       >
-                        <div className="relative inline-block w-[300px] h-[300px]">
+                        <div className="relative inline-block w-full max-w-[300px] aspect-square">
                           <img
                             src={item.img[0]}
                             alt="Default"
@@ -304,8 +294,8 @@ useEffect(() => {
                                 Out of Stock
                               </div>
                             )}
-
                         </div>
+
 
 
 
@@ -318,7 +308,7 @@ useEffect(() => {
                               >
                                 <h3 className="myNewC br_text-base-sans-spaced br_line-clamp-2 sm:br_line-clamp-none edition:br_text-grey-500 edition:br_hidden first:edition:br_inline edition:before:br_content-['_–_'] apex:edition:br_text-grey-300">
                                   <a
-                                    href={`/product?id=${item._id}&&imgg=${item.img[0]}`}
+                                    href={`/product?id=${item._id}`}
                                     className="br_text-current br_no-underline myGray"
                                     id="anchorNew"
                                   >
@@ -396,7 +386,7 @@ useEffect(() => {
 
 
 
-                            <div className="mt-4 mb-4 flex justify-center items-center space-x-4">
+              <div className="mt-4 mb-4 flex justify-center items-center space-x-4">
                 <button
                   onClick={() => setPage(p => Math.max(p - 1, 1))}
                   disabled={page === 1}

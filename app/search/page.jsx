@@ -101,32 +101,32 @@ const Body = () => {
 
                 {allTemp && allTemp.length > 0 ? (
                   allTemp.map((item, index) => (
-                    <a href={`/product?id=${item._id}&&imgg=${item.img[0]}`}  >
+                    <a href={`/product?id=${item._id}`}  >
                       <div
                         key={item._id}
                         className="br_grid br_grid-cols-1 supports-subgrid:br_row-span-4 supports-subgrid:br_grid-rows-[subgrid]"
                       >
-                        <div className="relative inline-block w-[300px] h-[300px]">
-                          <img
-                            src={item.img[0]}
-                            alt="Default"
-                            className="w-full h-full object-cover object-center rounded"
-                          />
+<div className="relative inline-block w-full max-w-[300px] aspect-square">
+  <img
+    src={item.img[0]}
+    alt="Default"
+    className="w-full h-full object-cover object-center rounded"
+  />
 
-                          {(
-                            (item.type === 'single' && parseInt(item.stock) === 0) ||
-                            (item.type === 'collection' &&
-                              item.color?.every(color =>
-                                color.sizes?.every(size => parseInt(size.qty) === 0)
-                              )
-                            )
-                          ) && (
-                              <div className="absolute inset-0 bg-gray-600 bg-opacity-70 text-white flex items-center justify-center text-lg font-bold z-10 rounded">
-                                Out of Stock
-                              </div>
-                            )}
+  {(
+    (item.type === 'single' && parseInt(item.stock) === 0) ||
+    (item.type === 'collection' &&
+      item.color?.every(color =>
+        color.sizes?.every(size => parseInt(size.qty) === 0)
+      )
+    )
+  ) && (
+    <div className="absolute inset-0 bg-gray-600 bg-opacity-70 text-white flex items-center justify-center text-lg font-bold z-10 rounded">
+      Out of Stock
+    </div>
+  )}
+</div>
 
-                        </div>
 
 
 
@@ -139,7 +139,7 @@ const Body = () => {
                               >
                                 <h3 className="myNewC br_text-base-sans-spaced br_line-clamp-2 sm:br_line-clamp-none edition:br_text-grey-500 edition:br_hidden first:edition:br_inline edition:before:br_content-['_–_'] apex:edition:br_text-grey-300">
                                   <a
-                                    href={`/product?id=${item._id}&&imgg=${item.img[0]}`}
+                                    href={`/product?id=${item._id}`}
                                     className="br_text-current br_no-underline myGray"
                                     id="anchorNew"
                                   >
