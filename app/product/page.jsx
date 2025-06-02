@@ -69,21 +69,21 @@ const Page = () => {
   }
 
 
-useEffect(() => {
-  if (cat) {  
-    const fetchData = async () => {
-      try {
-        const response = await fetch(`api/products1/${cat}`);
-        const data = await response.json();
-        setAllTemps2(data.slice(0, 5));  // Only take first 5 items
-      } catch (error) {
-        console.error("Error fetching the description:", error);
-      }
-    };
+  useEffect(() => {
+    if (cat) {
+      const fetchData = async () => {
+        try {
+          const response = await fetch(`api/products1/${cat}`);
+          const data = await response.json();
+          setAllTemps2(data.slice(0, 5));  // Only take first 5 items
+        } catch (error) {
+          console.error("Error fetching the description:", error);
+        }
+      };
 
-    fetchData();
-  }
-}, [cat]);
+      fetchData();
+    }
+  }, [cat]);
 
 
 
@@ -134,7 +134,7 @@ useEffect(() => {
     if (selectedColorObj?.sizes?.length > 0 && !selectedSize) {
       alert("Please select a size.");
       return;
-    } 
+    }
 
     addToCart(allTemp1, quantity, selectedColor, selectedSize);
     handleClickc();
@@ -150,17 +150,17 @@ useEffect(() => {
   const isSingle = type === 'single';
 
   const isCollectionOutOfStock = isCollection && (!color || color.every(c => c.qty === 0));
-  const isCollectionOutOfStock1 = isCollection && color?.every(color => color.sizes?.every(size => parseInt(size.qty) === 0) );
+  const isCollectionOutOfStock1 = isCollection && color?.every(color => color.sizes?.every(size => parseInt(size.qty) === 0));
   const isSingleOutOfStock = isSingle && Number(stock) === 0;
   const isOutOfStock = isCollectionOutOfStock || isSingleOutOfStock || isCollectionOutOfStock1;
 
-const availableColorsWithSizes = color?.filter(c =>
-  c.sizes?.some(size => size.qty > 0)
-);
+  const availableColorsWithSizes = color?.filter(c =>
+    c.sizes?.some(size => size.qty > 0)
+  );
 
-const availableColorsWithoutSizes = color?.filter(
-  c => (!c.sizes || c.sizes.length === 0) && c.qty > 0 // assuming a top-level qty field
-);
+  const availableColorsWithoutSizes = color?.filter(
+    c => (!c.sizes || c.sizes.length === 0) && c.qty > 0 // assuming a top-level qty field
+  );
 
 
 
@@ -261,81 +261,75 @@ const availableColorsWithoutSizes = color?.filter(
                   </div>
                   <hr />
                   <div className="ProductSelector_IntroBlurb">
-                    <span className="ProvidersIfSelectedProductMatchesFilter">
-                      <p
-                        className='myGray'
-                        dangerouslySetInnerHTML={{ __html: desc }}
-                      /><br />
-                    </span>
 
-{isCollection && (
-  <div className="mb-4">
-    <h2 className="color-label myGray">Choose a Color:</h2>
-    <div className="color-options">
-      {availableColorsWithSizes?.map((c, index) => (
-        <div
-          key={index}
-          onClick={() => {
-            setSelectedColor(c.color);
-            setSelectedSize(null);
-            setDisplayedPrice(null);
-          }}
-          className={`color-circle ${selectedColor === c.color ? 'selected' : ''}`}
-          style={{ backgroundColor: c.color }}
-          title={`${c.color}`}
-        />
-      ))}
-    </div>
 
-    {!selectedColor && <p className="error-message">Please select a color.</p>}
+                    {isCollection && (
+                      <div className="mb-4">
+                        <h2 className="color-label myGray">Choose a Color:</h2>
+                        <div className="color-options">
+                          {availableColorsWithSizes?.map((c, index) => (
+                            <div
+                              key={index}
+                              onClick={() => {
+                                setSelectedColor(c.color);
+                                setSelectedSize(null);
+                                setDisplayedPrice(null);
+                              }}
+                              className={`color-circle ${selectedColor === c.color ? 'selected' : ''}`}
+                              style={{ backgroundColor: c.color }}
+                              title={`${c.color}`}
+                            />
+                          ))}
+                        </div>
 
-    {selectedColor && availableColorsWithSizes.some(c => c.color === selectedColor) && (
-      <div className="mb-4">
-        <h2 className="size-label">Choose a Size:</h2>
-        <div className="size-options">
-          {availableColorsWithSizes
-            .find((c) => c.color === selectedColor)
-            ?.sizes?.filter((s) => s.qty > 0)
-            ?.map((s, idx) => (
-              <button
-                key={idx}
-                onClick={() => {
-                  setSelectedSize(s.size);
-                  setDisplayedPrice(s.price);
-                }}
-                className={`px-3 py-1 m-1 border rounded ${
-                  selectedSize === s.size ? 'bg-blue-500 text-white' : 'bg-gray-100'
-                } myGray`}
-              >
-                {s.size}
-              </button>
-            ))}
-        </div>
-      </div>
-    )}
+                        {!selectedColor && <p className="error-message">Please select a color.</p>}
 
-    {availableColorsWithoutSizes?.length > 0 && (
-      <div className="mt-4">
-        <h2 className="color-label myGray">Other Colors:</h2>
-        <div className="color-options">
-          {availableColorsWithoutSizes?.map((c, index) => (
-            <div
-              key={index}
-              onClick={() => {
-                setSelectedColor(c.color);
-                setSelectedSize(null);
-                setDisplayedPrice(c.price ?? null);
-              }}
-              className={`color-circle ${selectedColor === c.color ? 'selected' : ''}`}
-              style={{ backgroundColor: c.color }}
-              title={`${c.color}`}
-            />
-          ))}
-        </div>
-      </div>
-    )}
-  </div>
-)}
+                        {selectedColor && availableColorsWithSizes.some(c => c.color === selectedColor) && (
+                          <div className="mb-4">
+                            <h2 className="size-label">Choose a Size:</h2>
+                            <div className="size-options">
+                              {availableColorsWithSizes
+                                .find((c) => c.color === selectedColor)
+                                ?.sizes?.filter((s) => s.qty > 0)
+                                ?.map((s, idx) => (
+                                  <button
+                                    key={idx}
+                                    onClick={() => {
+                                      setSelectedSize(s.size);
+                                      setDisplayedPrice(s.price);
+                                    }}
+                                    className={`px-3 py-1 m-1 border rounded ${selectedSize === s.size ? 'bg-blue-500 text-white' : 'bg-gray-100'
+                                      } myGray`}
+                                  >
+                                    {s.size}
+                                  </button>
+                                ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {availableColorsWithoutSizes?.length > 0 && (
+                          <div className="mt-4">
+                            <h2 className="color-label myGray">Other Colors:</h2>
+                            <div className="color-options">
+                              {availableColorsWithoutSizes?.map((c, index) => (
+                                <div
+                                  key={index}
+                                  onClick={() => {
+                                    setSelectedColor(c.color);
+                                    setSelectedSize(null);
+                                    setDisplayedPrice(c.price ?? null);
+                                  }}
+                                  className={`color-circle ${selectedColor === c.color ? 'selected' : ''}`}
+                                  style={{ backgroundColor: c.color }}
+                                  title={`${c.color}`}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
 
 
 
@@ -434,7 +428,12 @@ const availableColorsWithoutSizes = color?.filter(
                             <div className=""></div>
                           </div>
                         </form>
-
+                    <span className="ProvidersIfSelectedProductMatchesFilter">
+                      <p
+                        className='myGray'
+                        dangerouslySetInnerHTML={{ __html: desc }}
+                      /><br />
+                    </span>
                       </div>
                     )}
                     <br />

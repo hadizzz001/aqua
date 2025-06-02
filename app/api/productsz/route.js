@@ -15,14 +15,20 @@ export async function GET(req) {
 
     const skip = (page - 1) * limit;
 
-    // Get filters from query string
     const category = searchParams.getAll('category'); 
 
-    // Build MongoDB query based on filters
+    // Build query to filter by category and exclude 'Pool Trays'
     const query = {};
+
     if (category.length > 0) {
-      query.category = { $in: category };
-    } 
+      query.$and = [
+        { category: { $in: category } },
+        { category: { $ne: 'Pool Trays' } }
+      ];
+    } else {
+      // If no category filter provided, just exclude 'Pool Trays'
+      query.category = { $ne: 'Pool Trays' };
+    }
 
     const total = await collection.countDocuments(query);
 

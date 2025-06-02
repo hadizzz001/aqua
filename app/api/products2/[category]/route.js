@@ -12,7 +12,12 @@ export async function GET(request, { params }) {
     const db = client.db('test');  
     const collection = db.collection('Product');  
 
-    const data = await collection.find({ category: { $in: categories } }).toArray(); 
+    const data = await collection.find({
+      $and: [
+        { category: { $in: categories } },
+        { category: { $ne: 'Pool Trays' } }
+      ]
+    }).toArray(); 
 
     return NextResponse.json(data);  
   } catch (error) {

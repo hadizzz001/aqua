@@ -9,7 +9,11 @@ export async function GET() {
     const db = client.db('test'); // Replace with your database name
     const collection = db.collection('Product'); // Replace with your collection name
 
-    const data = await collection.find({}).sort({ _id: -1 }).toArray(); // Fetch all documents
+    // Exclude documents where category is "Pool Trays"
+    const data = await collection
+      .find({ category: { $ne: 'Pool Trays' } })
+      .sort({ _id: -1 })
+      .toArray();
 
     return NextResponse.json(data); // Return data as JSON
   } catch (error) {

@@ -19,20 +19,23 @@ export async function GET(req) {
     const cat = searchParams.get('cat'); 
 
     // Build MongoDB query
-    const query = {};
+    const query = { category: { $ne: 'Pool Trays' } }; // Always exclude 'Pool Trays'
 
     if (search) {
-      query.title = { $regex: search, $options: 'i' }; // case-insensitive partial match
+      query.title = { $regex: search, $options: 'i' }; // case-insensitive search
     }
 
     if (cat) {
       if (cat === 'yes') {
         query.arrival = 'yes';
       } else {
-        query.category = { $regex: `^${cat}$`, $options: 'i' };
+        query.category = { 
+          $regex: `^${cat}$`, 
+          $options: 'i', 
+          $ne: 'Pool Trays' // Combine regex and exclusion
+        };
       }
     }
- 
 
     const total = await collection.countDocuments(query);
     const data = await collection.find(query).skip(skip).limit(limit).toArray();
