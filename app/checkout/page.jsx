@@ -256,87 +256,98 @@ useEffect(() => {
 
 
 
-  const generatePDF = async () => {
-    const doc = new jsPDF();
-    doc.setFontSize(18);
-    doc.text('Product List PDF', 10, 10);
+const generatePDF = async () => {
+  const doc = new jsPDF();
+  doc.setFontSize(18);
+  doc.text('Product List PDF', 10, 10);
 
-    const imagePromises = cart.map(async (item) => {
-      const imageUrl = item.img[0];
-      const imageData = await toDataURL(imageUrl);
-      return {
-        ...item,
-        imageData,
-      };
+  const imagePromises = cart.map(async (item) => {
+    const imageUrl = item.img[0];
+    const imageData = await toDataURL(imageUrl);
+    return {
+      ...item,
+      imageData,
+    };
+  });
+
+  const itemsWithImages = await Promise.all(imagePromises);
+
+  // Calculate total amount
+  const totalAmount = itemsWithImages.reduce((sum, item) => {
+    return sum + item.discount * item.quantity;
+  }, 0);
+
+  const tableData = itemsWithImages.map((item) => [
+    { content: '', image: item.imageData },
+    item.title,
+    item.category,
+    `$${item.discount}`,
+    item.quantity,
+    item.selectedColor,
+  ]);
+
+  // Add total row at the end
+  tableData.push([
+    '', '', 'Total Amount', '', '', `$${totalAmount.toFixed(2)}`
+  ]);
+
+  // Utility to chunk array into groups of 8
+  const chunkArray = (arr, size) =>
+    Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
+      arr.slice(i * size, i * size + size)
+    );
+
+  const chunkedData = chunkArray(tableData, 8);
+  let startY = 20;
+
+  chunkedData.forEach((chunk, index) => {
+    if (index > 0) {
+      doc.addPage();
+      startY = 10;
+      doc.setFontSize(18);
+      doc.text('Product List PDF (continued)', 10, startY);
+      startY += 10;
+    }
+
+    autoTable(doc, {
+      startY,
+      head: [['Image', 'Title', 'Category', 'Price', 'Quantity', 'Color']],
+      body: chunk,
+      didDrawCell: (data) => {
+        if (data.column.index === 0 && data.cell.raw.image) {
+          doc.addImage(
+            data.cell.raw.image,
+            'JPEG',
+            data.cell.x + 2,
+            data.cell.y + 2,
+            25,
+            25
+          );
+        }
+      },
+      columnStyles: {
+        0: { cellWidth: 30 },
+      },
+      headStyles: {
+        minCellHeight: 10,
+        valign: 'middle',
+        halign: 'center',
+      },
+      bodyStyles: {
+        minCellHeight: 30,
+        valign: 'middle',
+        halign: 'center',
+      },
+      styles: {
+        fontSize: 10,
+        cellPadding: 3,
+      },
     });
+  });
 
-    const itemsWithImages = await Promise.all(imagePromises);
+  doc.save('cart-items.pdf');
+};
 
-    const tableData = itemsWithImages.map((item) => [
-      { content: '', image: item.imageData },
-      item.title,
-      item.category,
-      `$${item.discount}`,
-      item.quantity,
-      item.selectedColor,
-    ]);
-
-    // Utility to chunk array into groups of 8
-    const chunkArray = (arr, size) =>
-      Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
-        arr.slice(i * size, i * size + size)
-      );
-
-    const chunkedData = chunkArray(tableData, 8);
-    let startY = 20;
-
-    chunkedData.forEach((chunk, index) => {
-      if (index > 0) {
-        doc.addPage();
-        startY = 10;
-        doc.setFontSize(18);
-        doc.text('Product List PDF (continued)', 10, startY);
-        startY += 10;
-      }
-
-      autoTable(doc, {
-        startY,
-        head: [['Image', 'Title', 'Category', 'Price', 'Quantity', 'Color']],
-        body: chunk,
-        didDrawCell: (data) => {
-          if (data.column.index === 0 && data.cell.raw.image) {
-            doc.addImage(
-              data.cell.raw.image,
-              'JPEG',
-              data.cell.x + 2,
-              data.cell.y + 2,
-              25,
-              25
-            );
-          }
-        },
-        columnStyles: {
-          0: { cellWidth: 30 },
-        },
-        headStyles: {
-          minCellHeight: 10,
-          valign: 'middle',
-          halign: 'center',
-        },
-        bodyStyles: {
-          minCellHeight: 30,
-          valign: 'middle',
-          halign: 'center',
-        },
-        styles: {
-          fontSize: 10,
-          cellPadding: 3,
-        },
-      });
-    });
-
-    doc.save('cart-items.pdf');
-  };
 
   const toDataURL = async (url) => {
     const res = await fetch(url);
